@@ -1,0 +1,37 @@
+/* frontend/src/index.css */
+
+/* --- Font (from your design) --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* --- CSS Variables (from your design) --- */
+:root {
+  --primary-blue: #6366F1; /* A close match to your design's purple/blue */
+  --primary-dark: #111827;
+  --text-light: #6B7280;
+  --bg-light-gray: #F9FAFB;
+  --white: #FFFFFF;
+}
+
+/* --- Basic Reset --- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--primary-dark);
+  background-color: var(--white);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  border: none;
+}

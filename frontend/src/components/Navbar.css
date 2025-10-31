@@ -1,0 +1,66 @@
+/* frontend/src/components/Navbar.css */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: var(--white);
+  border-bottom: 1px solid #E5E7EB;
+  height: 60px;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.navbar-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.navbar-links a {
+  color: var(--text-light);
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.navbar-links a:hover {
+  color: var(--primary-blue);
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navbar-actions .btn-login {
+  color: var(--text-light);
+  font-weight: 600;
+  padding: 0.5rem;
+}
+
+.navbar-actions .btn-join {
+  background-color: var(--primary-blue);
+  color: var(--white);
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.navbar-actions .btn-join:hover {
+  background-color: #4F46E5; /* A slightly darker blue */
+}
+
+/* --- Styles for the "Logout" button --- */
+.btn-logout {
+  background-color: var(--primary-dark);
+  color: var(--white);
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+}

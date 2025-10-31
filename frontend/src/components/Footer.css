@@ -1,0 +1,30 @@
+/* frontend/src/components/Footer.css */
+
+.footer {
+  background-color: var(--primary-dark);
+  color: #9CA3AF; /* Light gray text */
+  padding: 2rem 0;
+  margin-top: auto; /* This helps it stick to the bottom in some layouts */
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.footer-links a {
+  transition: color 0.2s;
+}
+
+.footer-links a:hover {
+  color: var(--white);
+}
