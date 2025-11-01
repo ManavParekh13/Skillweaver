@@ -2,19 +2,18 @@
 
 import axios from 'axios';
 
-// Create an instance of axios
+// 1. Get the production API URL from the .env file
+// VITE_ requires that prefix for environment variables
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 const api = axios.create({
-  baseURL: '/api', // The proxy will handle the rest
+  baseURL: API_URL, // Use the new URL
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-/*
-  This is an "interceptor". It runs BEFORE every request.
-  It gets the token from localStorage and adds it to the
-  'Authorization' header.
-*/
+// This interceptor (to add the token) is still perfect
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
