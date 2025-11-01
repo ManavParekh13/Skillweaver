@@ -1,7 +1,7 @@
 // frontend/src/Pages/RegisterPage.jsx
 
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api.js';
 import { useNavigate, Link, NavLink } from 'react-router-dom'; // Import NavLink
 import './Form.css'; // <-- 1. IMPORT YOUR CSS
 
@@ -25,7 +25,7 @@ function RegisterPage() {
     e.preventDefault();
     setError(null);
     try {
-      await axios.post('/api/auth/register', formData);
+      await api.post('/auth/register', formData);
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.msg || 'Registration failed.');
