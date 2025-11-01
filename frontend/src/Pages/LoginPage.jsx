@@ -1,7 +1,7 @@
 // frontend/src/Pages/LoginPage.jsx
 
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../utils/api.js';
 import { useNavigate, Link, NavLink } from 'react-router-dom'; // Import NavLink
 import { useAuth } from '../context/AuthContext.jsx';
 import './Form.css'; // <-- 1. IMPORT YOUR NEW CSS
@@ -20,7 +20,7 @@ function LoginPage() {
     e.preventDefault();
     setError(null);
     try {
-      const response = await axios.post('/api/auth/login', formData);
+      const response = await api.post('/auth/login', formData);
       login(response.data.token);
       navigate('/dashboard');
     } catch (err) {
