@@ -20,7 +20,7 @@ function UserDashboard() {
         setProfile(profileRes.data);
         
         // Fetch all swaps for this user
-        const swapsRes = await api.get('/api/swaps/me');
+        const swapsRes = await api.get('/swaps/me');
         setSwaps(swapsRes.data);
       } catch (err) {
         console.error(err);
@@ -35,7 +35,7 @@ function UserDashboard() {
   const handleSwapAction = async (id, newStatus) => {
     try {
       // Send the update to the API
-      const res = await api.put(`/api/swaps/${id}`, { status: newStatus });
+      const res = await api.put(`/swaps/${id}`, { status: newStatus });
       
       // Update the state locally to avoid a full reload
       setSwaps(swaps.map(swap => (swap._id === id ? res.data : swap)));

@@ -1,46 +1,61 @@
 // frontend/src/Pages/DashboardPage.jsx
 
 import React, { useState, useEffect } from 'react';
-import api from '../utils/api.js';
+import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import api from '../utils/api.js'; 
 import './Dashboard.css';
+
+// --- Helper Data (from seeder) ---
+const SKILL_LIST = [
+  'React', 'JavaScript', 'Node.js', 'Python', 'Guitar', 'Piano', 
+  'Cooking', 'Baking', 'Photography', 'Graphic Design', 'Spanish', 
+  'French', 'Yoga', 'Public Speaking', 'Marketing', 'SEO', 
+  'Project Management', 'Data Analysis'
+];
+const LOCATION_LIST = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata'];
+const LEVEL_LIST = ['Beginner', 'Intermediate', 'Expert'];
+const ITEMS_PER_PAGE = 20;
 
 function DashboardPage() {
   const { token } = useAuth();
-  const [offerings, setOfferings] = useState([]); // Renamed from 'users'
+  const [offerings, setOfferings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // --- State for Filters ---
-  const [searchTerm, setSearchTerm] = useState('');
-  const [level, setLevel] = useState('');
+  const [searchUser, setSearchUser] = useState('');
+  const [searchSkill, setSearchSkill] = useState('');
+  const [searchLocation, setSearchLocation] = useState('');
+  const [searchLevel, setSearchLevel] = useState(''); // <-- 1. ADD LEVEL STATE
+
+  // --- State for Pagination ---
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
   useEffect(() => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/public/users');
+        const response = await axios.get('/api/public/users'); 
         
-        // --- THIS IS THE NEW LOGIC ---
-        // 1. Create a flat array of "skill offerings" from the user data
         const allOfferings = [];
         response.data.forEach(user => {
-          // 2. Create one card for EACH skill a user teaches
           user.skillsToTeach.forEach(skillObj => {
-  allOfferings.push({
-    _id: `${user._id}_${skillObj.skill}`,
-    skill: skillObj.skill,
-    level: skillObj.level,
-    user: { // <-- THIS IS THE IMPORTANT PART
-      _id: user._id, // <-- MAKE SURE THIS ID IS HERE
-      username: user.username,
-      bio: user.bio,
-      skillsToLearn: user.skillsToLearn}
+            allOfferings.push({
+              _id: `${user._id}_${skillObj.skill}`,
+              skill: skillObj.skill,
+              level: skillObj.level,
+              user: { 
+                _id: user._id,
+                username: user.username,
+                bio: user.bio,
+                skillsToLearn: user.skillsToLearn,
+                location: user.location 
+              }
             });
           });
         });
         setOfferings(allOfferings);
-        // --- END OF NEW LOGIC ---
 
       } catch (err) {
         console.error(err);
@@ -51,27 +66,34 @@ function DashboardPage() {
     fetchAllData();
   }, []);
 
-  // --- Filtering Logic (now filters offerings) ---
+  // --- Full Filtering Logic ---
   const filteredOfferings = offerings.filter(offering => {
-    // Filter by Level
-    if (level && offering.level !== level) {
+    // 1. Filter by Skill
+    if (searchSkill && offering.skill !== searchSkill) {
       return false;
     }
-
-    // Filter by Search Term
-    const term = searchTerm.toLowerCase();
-    const hasMatchingUser = offering.user.username.toLowerCase().includes(term);
-    const hasMatchingSkill = offering.skill.toLowerCase().includes(term);
-
-    if (searchTerm && !hasMatchingUser && !hasMatchingSkill) {
+    // 2. Filter by Location
+    if (searchLocation && offering.user.location !== searchLocation) {
+      return false;
+    }
+    // 3. Filter by Level
+    if (searchLevel && offering.level !== searchLevel) { // <-- 2. ADD LEVEL LOGIC
+      return false;
+    }
+    // 4. Filter by User
+    const userTerm = searchUser.toLowerCase();
+    if (userTerm && !offering.user.username.toLowerCase().includes(userTerm)) {
       return false;
     }
     
     return true; 
   });
 
-  // --- Gating Logic ---
-  const offeringsToShow = token ? filteredOfferings : filteredOfferings.slice(0, 20);
+  // --- Pagination Logic ---
+  const loadMore = () => {
+    setVisibleCount(prevCount => prevCount + ITEMS_PER_PAGE);
+  };
+  const offeringsToShow = filteredOfferings.slice(0, visibleCount);
 
   return (
     <div className="browse-container">
@@ -82,27 +104,51 @@ function DashboardPage() {
 
       {/* --- Functional Filter Bar --- */}
       <div className="filter-bar">
+        {/* --- Skill Dropdown --- */}
+        <select 
+          className="filter-select"
+          value={searchSkill}
+          onChange={(e) => setSearchSkill(e.target.value)}
+        >
+          <option value="">All Skills</option>
+          {SKILL_LIST.map(skill => (
+            <option key={skill} value={skill}>{skill}</option>
+          ))}
+        </select>
+
+        {/* --- Location Dropdown --- */}
+        <select 
+          className="filter-select"
+          value={searchLocation}
+          onChange={(e) => setSearchLocation(e.target.value)}
+        >
+          <option value="">All Locations</option>
+          {LOCATION_LIST.map(loc => (
+            <option key={loc} value={loc}>{loc}</option>
+          ))}
+        </select>
+
+        {/* --- 3. ADD LEVEL DROPDOWN --- */}
+        <select 
+          className="filter-select"
+          value={searchLevel}
+          onChange={(e) => setSearchLevel(e.target.value)}
+        >
+          <option value="">All Levels</option>
+          {LEVEL_LIST.map(lvl => (
+            <option key={lvl} value={lvl}>{lvl}</option>
+          ))}
+        </select>
+        
+        {/* --- User Search Input --- */}
         <div className="filter-search">
           <input
             type="text"
-            placeholder="Search skills or users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by username..."
+            value={searchUser}
+            onChange={(e) => setSearchUser(e.target.value)}
           />
         </div>
-        <select 
-          className="filter-select"
-          value={level}
-          onChange={(e) => setLevel(e.target.value)}
-        >
-          <option value="">All Levels</option>
-          <option value="Beginner">Beginner</option>
-          <option value="Intermediate">Intermediate</option>
-          <option value="Expert">Expert</option>
-        </select>
-        <select className="filter-select" disabled>
-          <option value="">Location (coming soon)</option>
-        </select>
       </div>
 
       {/* --- Skill Grid --- */}
@@ -113,7 +159,6 @@ function DashboardPage() {
           {offeringsToShow.length === 0 ? (
             <p>No skills found. Try a different search!</p>
           ) : (
-            // Map over the new 'offeringsToShow' array
             offeringsToShow.map(offering => (
               <SkillCard key={offering._id} offering={offering} />
             ))
@@ -121,8 +166,8 @@ function DashboardPage() {
         </div>
       )}
 
-      {/* --- "See More" Button --- */}
-      {!token && filteredOfferings.length > 20 && (
+      {/* --- "See More" / "Register" Buttons --- */}
+      {!token && filteredOfferings.length > visibleCount && (
         <div className="see-more-container">
           <p>Want to see all {filteredOfferings.length} results?</p>
           <Link to="/register" className="see-more-btn">
@@ -130,38 +175,33 @@ function DashboardPage() {
           </Link>
         </div>
       )}
+      {token && filteredOfferings.length > visibleCount && (
+        <div className="see-more-container">
+          <button className="see-more-btn" onClick={loadMore}>
+            See More ({filteredOfferings.length - visibleCount} remaining)
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-// --- Skill Card Component (Updated) ---
+// --- Skill Card Component (This component is unchanged) ---
 function SkillCard({ offering }) {
   const { token } = useAuth();
   const navigate = useNavigate();
 
   const handleRequestSwap = async () => {
-    // 1. Get the skill the requester wants to offer
-    const skillOffered = prompt(
-      `What skill will you offer ${offering.user.username} in return for ${offering.skill}?`
-    );
-
-    if (!skillOffered) {
-      alert('You must specify a skill to offer.');
-      return;
-    }
-
+    const skillOffered = prompt(`What skill will you offer ${offering.user.username} in return for ${offering.skill}?`);
+    if (!skillOffered) return;
     try {
-      // 2. Send the request to our new API endpoint
-      await api.post('/api/swaps', {
+      await api.post('/swaps', {
         providerId: offering.user._id,
         skillRequested: offering.skill,
         skillOffered: skillOffered
       });
-
-      // 3. Success!
       alert('Swap request sent successfully!');
-      navigate('/dashboard'); // Go to your private dashboard
-
+      navigate('/dashboard'); 
     } catch (err) {
       console.error(err);
       alert('Failed to send swap request.');
@@ -178,25 +218,26 @@ function SkillCard({ offering }) {
           <span className={`skill-level ${levelClass}`}>{offering.level}</span>
         </div>
       </div>
-
+      
       <p className="skill-card-desc">{offering.user.bio || 'No bio provided.'}</p>
+      
       <div className="skill-card-user">
         <div className="skill-card-user-info">
           <span>{offering.user.username}</span>
+          <small>{offering.user.location}</small>
         </div>
       </div>
+      
       <div className="skill-card-looking">
         <span>Looking for:</span> {offering.user.skillsToLearn.join(', ') || 'Not specified'}
       </div>
-
+      
       <div className="skill-card-footer">
         {token ? (
-          // Logged IN: Show a functional button
           <button className="skill-swap-btn" onClick={handleRequestSwap}>
             Request Swap
           </button>
         ) : (
-          // Logged OUT: Link to login page
           <Link to="/login" className="skill-swap-btn">
             Login to Request Swap
           </Link>

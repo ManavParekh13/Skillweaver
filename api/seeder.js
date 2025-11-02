@@ -16,7 +16,8 @@ const sampleSkills = [
   'French', 'Yoga', 'Public Speaking', 'Marketing', 'SEO', 
   'Project Management', 'Data Analysis'
 ];
-const levels = ['Beginner', 'Intermediate', 'Expert']; // Keep this
+const levels = ['Beginner', 'Intermediate', 'Expert'];
+const sampleLocations = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata'];
 
 function getRandomSubset(array, size) {
   const shuffled = array.sort(() => 0.5 - Math.random());
@@ -40,25 +41,25 @@ const seedDB = async () => {
     const users = [];
     for (let i = 0; i < 100; i++) {
       
-      // 1. Create the skillsToTeach array of objects
       const skillsToTeach = [];
-      const skillNames = getRandomSubset(sampleSkills, 4); // Get 1-4 skill names
+      const skillNames = getRandomSubset(sampleSkills, 4); 
       
       for (const skillName of skillNames) {
         skillsToTeach.push({
           skill: skillName,
-          level: levels[Math.floor(Math.random() * levels.length)] // Assign a random level
+          level: levels[Math.floor(Math.random() * levels.length)]
         });
       }
       
-      // 2. Create the new user
       const user = new User({
         username: faker.person.fullName(),
         email: faker.internet.email().toLowerCase(),
         password: hashedPassword,
         bio: faker.lorem.paragraph(),
-        location: faker.location.city(),
-        skillsToTeach: skillsToTeach, // Use the new array of objects
+        // --- 2. THIS IS THE CHANGE ---
+        location: sampleLocations[Math.floor(Math.random() * sampleLocations.length)],
+        // --------------------------
+        skillsToTeach: skillsToTeach, 
         skillsToLearn: getRandomSubset(sampleSkills, 3), 
       });
       users.push(user);

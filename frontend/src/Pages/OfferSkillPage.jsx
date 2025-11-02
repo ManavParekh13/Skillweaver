@@ -3,31 +3,44 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api.js';
 import { useNavigate } from 'react-router-dom';
-import './Form.css'; // Use this for the main card layout
-import './ProfilePage.css'; // Use this for the form inputs
+import './Form.css';
+import './ProfilePage.css';
+
+// --- Lists for our dropdowns ---
+const SKILL_LIST = [
+  'React', 'JavaScript', 'Node.js', 'Python', 'Guitar', 'Piano', 
+  'Cooking', 'Baking', 'Photography', 'Graphic Design', 'Spanish', 
+  'French', 'Yoga', 'Public Speaking', 'Marketing', 'SEO', 
+  'Project Management', 'Data Analysis'
+];
+const LOCATION_LIST = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata'];
 
 function OfferSkillPage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // Form fields
-  const [skillName, setSkillName] = useState('');
+  // --- Form fields ---
+  const [skillName, setSkillName] = useState(SKILL_LIST[0]);
   const [skillLevel, setSkillLevel] = useState('Beginner');
-  const [skillsDesired, setSkillsDesired] = useState('');
-  const [location, setLocation] = useState('');
+  const [location, setLocation] = useState(LOCATION_LIST[0]);
   const [bio, setBio] = useState('');
+  
+  // --- CHANGED: "Skills Desired" is now an array and has a helper state ---
+  const [skillsDesired, setSkillsDesired] = useState([]);
+  const [learnSkillInput, setLearnSkillInput] = useState(SKILL_LIST[0]); // State for the dropdown
 
   const navigate = useNavigate();
 
-  // 1. Load the user's current data to pre-fill the form
+  // Load the user's current data
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await api.get('/profile/me');
         setProfile(res.data);
         setBio(res.data.bio || '');
-        setLocation(res.data.location || '');
-        setSkillsDesired(res.data.skillsToLearn.join(', '));
+        setLocation(res.data.location || LOCATION_LIST[0]);
+        // --- CHANGED: Set an array, not a string ---
+        setSkillsDesired(res.data.skillsToLearn || []);
         setLoading(false);
       } catch (err) {
         console.error(err);
@@ -36,32 +49,48 @@ function OfferSkillPage() {
     fetchProfile();
   }, []);
 
-  // 2. Handle form submission
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // 1. Prepare the new data
       const newSkillOffering = { skill: skillName, level: skillLevel };
-      const updatedSkillsToTeach = [...profile.skillsToTeach, newSkillOffering];
-      const updatedSkillsToLearn = skillsDesired.split(',').map(s => s.trim()).filter(s => s);
+      
+      const alreadyHasSkill = profile.skillsToTeach.find(s => s.skill === skillName);
+      if (alreadyHasSkill) {
+        alert('You are already offering this skill.');
+        return;
+      }
 
-      // 2. Send the update
+      const updatedSkillsToTeach = [...profile.skillsToTeach, newSkillOffering];
+      
+      // --- CHANGED: 'skillsDesired' is already the correct array ---
       await api.put('/profile/me', {
         bio: bio,
         location: location,
-        skillsToLearn: updatedSkillsToLearn,
+        skillsToLearn: skillsDesired, // Just send the array
         skillsToTeach: updatedSkillsToTeach
       });
 
-      // 3. Success
       alert('New skill offered successfully!');
-      navigate('/dashboard'); // Go to their private dashboard
+      navigate('/dashboard'); 
 
     } catch (err) {
       console.error(err);
       alert('Failed to offer skill.');
     }
   };
+
+  // --- NEW: Helper functions for the "Skills Desired" list ---
+  const addLearnSkill = () => {
+    if (learnSkillInput && !skillsDesired.includes(learnSkillInput)) {
+      setSkillsDesired([...skillsDesired, learnSkillInput]);
+    }
+  };
+
+  const removeLearnSkill = (skillToRemove) => {
+    setSkillsDesired(skillsDesired.filter(skill => skill !== skillToRemove));
+  };
+
 
   if (loading) return <div>Loading...</div>;
 
@@ -74,18 +103,21 @@ function OfferSkillPage() {
         </div>
 
         <form onSubmit={handleSubmit}>
+          
           {/* Skill Name */}
           <div className="form-group">
             <label>Skill Name</label>
-            <input 
-              type="text" 
-              className="skill-input"
+            <select 
+              className="skill-level-select"
               value={skillName}
               onChange={(e) => setSkillName(e.target.value)}
-              placeholder="e.g. Guitar Lessons, MERN Stack"
-              required
-            />
+            >
+              {SKILL_LIST.map(skill => (
+                <option key={skill} value={skill}>{skill}</option>
+              ))}
+            </select>
           </div>
+
           {/* Proficiency Level */}
           <div className="form-group">
             <label>Your Proficiency Level</label>
@@ -99,28 +131,47 @@ function OfferSkillPage() {
               <option>Expert</option>
             </select>
           </div>
-          {/* Skills Desired in Return */}
+
+          {/* --- JSX CHANGE: "Skills Desired" is now a dropdown + tag list --- */}
           <div className="form-group">
-            <label>Skills Desired in Return (separate with commas)</label>
-            <input 
-              type="text" 
-              className="skill-input"
-              value={skillsDesired}
-              onChange={(e) => setSkillsDesired(e.target.value)}
-              placeholder="e.g. Photography, Graphic Design"
-            />
+            <label>Skills Desired in Return</label>
+            <div className="skill-input-group">
+              <select
+                className="skill-level-select" // Re-using this class
+                value={learnSkillInput}
+                onChange={(e) => setLearnSkillInput(e.target.value)}
+              >
+                {SKILL_LIST.map(skill => (
+                  <option key={skill} value={skill}>{skill}</option>
+                ))}
+              </select>
+              <button type="button" className="skill-add-btn" onClick={addLearnSkill}>Add</button>
+            </div>
+            <ul className="skill-list" style={{ marginTop: '1rem' }}>
+              {skillsDesired.map((skill, index) => (
+                <li key={index} className="skill-tag">
+                  {skill}
+                  <button type="button" className="skill-remove-btn" onClick={() => removeLearnSkill(skill)}>×</button>
+                </li>
+              ))}
+            </ul>
           </div>
+          {/* --- END OF JSX CHANGE --- */}
+
           {/* Location */}
           <div className="form-group">
             <label>Your Location (City/Area)</label>
-            <input 
-              type="text" 
-              className="skill-input"
+            <select 
+              className="skill-level-select"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. Mumbai, New York"
-            />
+            >
+              {LOCATION_LIST.map(loc => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
+            </select>
           </div>
+
           {/* About Your Offer */}
           <div className="form-group">
             <label>About Your Offer (updates your main bio)</label>
