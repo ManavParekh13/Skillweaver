@@ -64,3 +64,14 @@
   padding: 0.5rem 1rem;
   border-radius: 6px;
 }
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Space between logo and text */
+}
+
+.navbar-logo {
+  height: 28px; /* Or whatever size you prefer */
+  width: 28px;
+}

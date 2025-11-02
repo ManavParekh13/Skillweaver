@@ -4,6 +4,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import './Navbar.css'; 
+import logo from '../assets/logo.png'; // <-- 1. IMPORT YOUR LOGO
 
 function Navbar() {
   const { token, logout } = useAuth();
@@ -17,22 +18,21 @@ function Navbar() {
   return (
     <nav className="navbar">
       
-      {/* --- Brand --- */}
-      <Link to="/" className="navbar-brand">SkillWeaver</Link>
+      {/* --- 2. REPLACE THE BRAND TEXT WITH AN IMG --- */}
+      <Link to="/" className="navbar-brand">
+        <img src={logo} alt="SkillWeaver Logo" className="navbar-logo" />
+        SkillWeaver
+      </Link>
 
       {/* --- Main Links --- */}
       <div className="navbar-links">
         {token ? (
-          // --- LOGGED-IN LINKS ---
           <>
-            {/* 1. "Home" now points to /dashboard */}
             <Link to="/dashboard">Home</Link>
             <Link to="/browse-skills">Browse Skills</Link> 
             <Link to="/offer-skill">Offer a Skill</Link>
-            {/* We remove "Profile" from here, since it's on the right */}
           </>
         ) : (
-          // --- LOGGED-OUT LINKS ---
           <>
             <Link to="/">Home</Link>
             <Link to="/browse-skills">Browse Skills</Link> 
@@ -43,14 +43,11 @@ function Navbar() {
       {/* --- Actions --- */}
       <div className="navbar-actions">
         {token ? (
-          // --- LOGGED-IN ACTIONS ---
           <>
-            {/* 2. "Dashboard" button is now a "Profile" button */}
             <Link to="/profile" className="btn-login">Profile</Link>
             <button onClick={handleLogout} className="btn-logout">Logout</button>
           </>
         ) : (
-          // --- LOGGED-OUT ACTIONS ---
           <>
             <Link to="/login" className="btn-login">Sign In</Link>
             <Link to="/register" className="btn-join">Join Now</Link>
