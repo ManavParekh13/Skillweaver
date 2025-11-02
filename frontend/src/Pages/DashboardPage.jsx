@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api.js';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import api from '../utils/api.js'; 
 import './Dashboard.css';
 
 // --- Helper Data (from seeder) ---
