@@ -1,7 +1,7 @@
 // frontend/src/Pages/DashboardPage.jsx
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api.js';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import api from '../utils/api.js'; 
@@ -36,7 +36,7 @@ function DashboardPage() {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/public/users'); 
+        const response = await api.get('/api/public/users'); 
         
         const allOfferings = [];
         response.data.forEach(user => {
