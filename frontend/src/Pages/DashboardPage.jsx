@@ -35,7 +35,7 @@ function DashboardPage() {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/api/public/users'); 
+        const response = await api.get('/public/users'); 
         
         const allOfferings = [];
         response.data.forEach(user => {
