@@ -1,5 +1,8 @@
 /* frontend/src/Pages/ProfilePage.css */
 
+/* This re-uses the CSS from your UserDashboard for consistency */
+@import url('./UserDashboard.css');
+
 .profile-page {
   background-color: var(--bg-light-gray);
   min-height: calc(100vh - 60px);
@@ -29,6 +32,7 @@
   justify-content: center;
   font-size: 2.5rem;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .profile-info h1 {
@@ -44,50 +48,41 @@
 
 .profile-actions {
   margin-left: auto;
-  display: flex;
-  gap: 1rem;
 }
-.profile-actions .btn-save {
-  padding: 0.6rem 1rem;
-  font-weight: 600;
-  color: var(--white);
-  background-color: var(--primary-blue);
-  border-radius: 6px;
-}
-.profile-actions .btn-secondary {
+.btn-edit-profile {
   padding: 0.6rem 1rem;
   font-weight: 600;
   color: var(--primary-dark);
-  background-color: var(--bg-light-gray);
+  background-color: var(--white);
   border: 1px solid #E5E7EB;
   border-radius: 6px;
+  transition: all 0.2s;
+}
+.btn-edit-profile:hover {
+  background-color: var(--bg-light-gray);
+}
+
+/* --- User Bio (New) --- */
+.profile-bio {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  margin-bottom: 1.5rem;
+  color: var(--text-light);
+  line-height: 1.6;
 }
 
 /* --- Stats Bar --- */
 .profile-stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* We only have 2 stats */
+  grid-template-columns: repeat(2, 1fr); /* 2 stats */
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
-.stat-card {
-  background-color: var(--white);
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-}
-.stat-card .value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--primary-blue);
-}
-.stat-card .label {
-  font-size: 1rem;
-  color: var(--text-light);
-  margin-top: 0.25rem;
-}
+/* Re-uses .stat-card from UserDashboard.css */
 
-/* --- Tabs Content --- */
+/* --- Content Tabs --- */
 .profile-content {
   background-color: var(--white);
   border-radius: 12px;
@@ -106,63 +101,33 @@
   font-weight: 600;
   color: var(--text-light);
   border-bottom: 2px solid transparent;
+  cursor: pointer;
 }
 .profile-tabs .tab.active {
   color: var(--primary-blue);
   border-bottom-color: var(--primary-blue);
 }
 
-/* --- Form styles (from before) --- */
-.profile-form-section {
+/* --- Skill List in Tab --- */
+.skill-list-container {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 2rem;
 }
-.profile-card { /* Re-using this style for the form sections */
-  background-color: #F9FAFB;
-  padding: 1.5rem;
-  border-radius: 8px;
-}
-.profile-card h3 {
+.skill-list-container h3 {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 1rem;
 }
-
-.skill-input-group {
-  display: flex; margin-bottom: 1rem; gap: 0.5rem;
+.skill-list-tab {
+  list-style: none;
 }
-.skill-input {
-  flex-grow: 1; padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px;
-}
-.skill-level-select {
-  padding: 0.5rem 0.75rem; border: 1px solid #D1D5DB; border-radius: 6px;
-}
-.skill-add-btn {
-  padding: 0.5rem 1rem; font-weight: 600; color: var(--primary-blue);
-  background-color: #EEF2FF; border-radius: 6px;
-}
-.skill-list {
-  list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem;
-}
-.skill-tag {
-  display: flex; align-items: center; background-color: var(--white);
-  padding: 0.25rem 0.75rem; border-radius: 20px; font-weight: 500;
-  border: 1px solid #E5E7EB;
-}
-.skill-tag .level {
-  font-size: 0.8em; color: var(--text-light); margin-left: 0.5rem;
-}
-.skill-remove-btn {
-  background: none; color: var(--text-light); font-size: 1.25rem; margin-left: 0.25rem;
-}
-textarea.profile-bio {
-  width: 100%;
-  min-height: 120px;
-  padding: 0.75rem 1rem;
+.skill-list-tab li {
   font-size: 1rem;
-  border: 1px solid #D1D5DB;
-  border-radius: 6px;
-  font-family: 'Inter', sans-serif;
-  resize: none; /* This will now be applied correctly */
+  color: var(--text-light);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #F3F4F6;
+}
+.skill-list-tab li strong {
+  color: var(--primary-dark);
 }

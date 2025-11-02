@@ -2,16 +2,19 @@
 
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import './App.css'; // <-- 1. IMPORT YOUR NEW CSS
+import './App.css'; 
 
 // Import Pages
 import HomePage from './Pages/HomePage.jsx';
 import LoginPage from './Pages/LoginPage.jsx';
 import RegisterPage from './Pages/RegisterPage.jsx';
-import DashboardPage from './Pages/DashboardPage.jsx';
-import UserDashboard from './Pages/UserDashboard.jsx';
+import DashboardPage from './Pages/DashboardPage.jsx';     
+import UserDashboard from './Pages/UserDashboard.jsx'; 
+import OfferSkillPage from './Pages/OfferSkillPage.jsx'; 
+// --- 1. IMPORT YOUR RENAMED PAGE ---
+import EditProfilePage from './Pages/EditProfilePage.jsx'; 
+// --- 2. IMPORT THE NEW PAGE WE WILL CREATE ---
 import ProfilePage from './Pages/ProfilePage.jsx';
-import OfferSkillPage from './Pages/OfferSkillPage.jsx';
 
 // Import Components
 import Navbar from './components/Navbar.jsx';
@@ -21,12 +24,8 @@ import Footer from './components/Footer.jsx';
 function App() {
   return (
     <BrowserRouter>
-      {/* 2. This new div is our main flex container */}
       <div className="app-container">
-      
         <Navbar />
-        
-        {/* 3. This 'main' tag wraps your content and grows */}
         <main className="content-wrap">
           <Routes>
             {/* --- Public Routes --- */}
@@ -35,17 +34,18 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/browse-skills" element={<DashboardPage />} />
 
-            {/* --- Protected Routes --- */}
+            {/* --- 3. UPDATE PROTECTED ROUTES --- */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<UserDashboard />} />
-              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/offer-skill" element={<OfferSkillPage />} />
+              {/* "/profile" IS NOW THE "VIEW" PAGE */}
+              <Route path="/profile" element={<ProfilePage />} />
+              {/* "/profile/edit" IS THE "EDIT" PAGE */}
+              <Route path="/profile/edit" element={<EditProfilePage />} />
             </Route>
           </Routes>
         </main>
-        
         <Footer />
-        
       </div>
     </BrowserRouter>
   );

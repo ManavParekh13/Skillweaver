@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api.js';
-import { useAuth } from '../context/AuthContext.jsx';
-import './ProfilePage.css'; 
+import { Link } from 'react-router-dom';
+import './ProfilePage.css'; // <-- Import your new CSS
 
-// Helper function to get initials from a username
+// Helper function to get initials
 const getInitials = (name) => {
   if (!name) return '??';
   const parts = name.split(' ');
@@ -15,74 +15,39 @@ const getInitials = (name) => {
 
 function ProfilePage() {
   const [user, setUser] = useState(null);
+  const [swaps, setSwaps] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [bio, setBio] = useState('');
-  const [skillsToTeach, setSkillsToTeach] = useState([]);
-  const [skillsToLearn, setSkillsToLearn] = useState([]);
-  const [teachSkill, setTeachSkill] = useState('');
-  const [teachLevel, setTeachLevel] = useState('Beginner');
-  const [learnSkill, setLearnSkill] = useState('');
+  const [activeTab, setActiveTab] = useState('swaps'); // 'swaps' or 'skills'
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/profile/me');
-        setUser(response.data);
-        setBio(response.data.bio || '');
-        setSkillsToTeach(response.data.skillsToTeach || []);
-        setSkillsToLearn(response.data.skillsToLearn || []);
+        // Fetch profile and swaps at the same time
+        const [profileRes, swapsRes] = await Promise.all([
+          api.get('/profile/me'),
+          api.get('/swaps/me')
+        ]);
+        setUser(profileRes.data);
+        setSwaps(swapsRes.data);
       } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchProfile();
+    fetchData();
   }, []);
-
-  const handleSave = async () => {
-    try {
-      const response = await api.put('/profile/me', {
-        bio,
-        skillsToTeach,
-        skillsToLearn
-      });
-      setUser(response.data);
-      setBio(response.data.bio);
-      setSkillsToTeach(response.data.skillsToTeach);
-      setSkillsToLearn(response.data.skillsToLearn);
-      alert('Profile Updated!');
-    } catch (err)      {
-      console.error(err);
-      alert('Error updating profile');
-    }
-  };
-
-  const addTeachSkill = () => {
-    if (teachSkill && !skillsToTeach.find(s => s.skill === teachSkill)) {
-      setSkillsToTeach([...skillsToTeach, { skill: teachSkill, level: teachLevel }]);
-      setTeachSkill('');
-      setTeachLevel('Beginner');
-    }
-  };
-  const removeTeachSkill = (skillToRemove) => {
-    setSkillsToTeach(skillsToTeach.filter(s => s.skill !== skillToRemove));
-  };
-  const addLearnSkill = () => {
-    if (learnSkill && !skillsToLearn.includes(learnSkill)) {
-      setSkillsToLearn([...skillsToLearn, learnSkill]);
-      setLearnSkill('');
-    }
-  };
-  const removeLearnSkill = (skillToRemove) => {
-    setSkillsToLearn(skillsToLearn.filter(skill => skill !== skillToRemove));
-  };
 
   if (loading || !user) {
     return <div>Loading profile...</div>;
   }
 
+  // --- Filter Swaps ---
+  // This is the logic from your UserDashboard page
+  const ongoingExchanges = swaps.filter(s => s.status === 'accepted');
+
+  // Format join date
   const joinDate = new Date(user.createdAt).toLocaleDateString('en-US', {
     month: 'long', year: 'numeric'
   });
@@ -98,19 +63,25 @@ function ProfilePage() {
           <p>{user.email} • Joined {joinDate}</p>
         </div>
         <div className="profile-actions">
-          <button className="btn-secondary">Settings</button>
-          <button className="btn-save" onClick={handleSave}>Save Profile</button>
+          <Link to="/profile/edit" className="btn-edit-profile">
+            Edit Profile
+          </Link>
         </div>
+      </div>
+      
+      {/* --- User Bio (Read-Only) --- */}
+      <div className="profile-bio">
+        {user.bio || "No bio... Click 'Edit Profile' to add one."}
       </div>
 
       {/* --- Stats Bar (Simplified) --- */}
       <div className="profile-stats">
         <div className="stat-card">
-          <div className="value">{skillsToTeach.length}</div>
+          <div className="value">{user.skillsToTeach.length}</div>
           <div className="label">Skills You Teach</div>
         </div>
         <div className="stat-card">
-          <div className="value">{skillsToLearn.length}</div>
+          <div className="value">{user.skillsToLearn.length}</div>
           <div className="label">Skills You're Learning</div>
         </div>
       </div>
@@ -118,79 +89,75 @@ function ProfilePage() {
       {/* --- Content Tabs --- */}
       <div className="profile-content">
         <div className="profile-tabs">
-          <div className="tab active">Skills</div>
+          <div 
+            className={`tab ${activeTab === 'swaps' ? 'active' : ''}`}
+            onClick={() => setActiveTab('swaps')}
+          >
+            Active Swaps
+          </div>
+          <div 
+            className={`tab ${activeTab === 'skills' ? 'active' : ''}`}
+            onClick={() => setActiveTab('skills')}
+          >
+            Skills
+          </div>
           <div className="tab">Reviews (Coming Soon)</div>
         </div>
         
-        {/* --- Tab Content (Our Form) --- */}
+        {/* --- Tab Content --- */}
         <div className="profile-tab-content">
-          {/* NOTE: The <form> tag was missing its closing tag! 
-            It should wrap the form sections, but for simplicity
-            let's remove it and just save with the button. 
-          */}
-          <div className="profile-form-section">
-            
-            {/* Bio */}
-            <div className="profile-card profile-bio">
-              <h3>Your Bio</h3>
-              <textarea
-                name="bio"
-                value={bio}
-                // --- FIX 1 ---
-                onChange={(e) => setBio(e.target.value)} 
-                placeholder="Tell us a bit about yourself..."
-              />
-            </div>
 
-            {/* Skills to Teach */}
-            <div className="profile-card">
-              <h3>Skills You Can Teach</h3>
-              <div className="skill-input-group">
-                <input type="text" className="skill-input" value={teachSkill}
-                  onChange={(e) => setTeachSkill(e.target.value)} placeholder="e.g., React" />
-                <select className="skill-level-select" value={teachLevel}
-                  onChange={(e) => setTeachLevel(e.target.value)}>
-                  <option>Beginner</option>
-                  <option>Intermediate</option>
-                  <option>Expert</option>
-                </select>
-                <button type="button" className="skill-add-btn" onClick={addTeachSkill}>Add</button>
-              </div>
-              <ul className="skill-list">
-                {skillsToTeach.map((s, index) => (
-                  <li key={index} className="skill-tag">
-                    {s.skill}
-                    <span className="level">({s.level})</span>
-                    {/* --- FIX 2 --- */}
-                    <button type="button" className="skill-remove-btn" onClick={() => removeTeachSkill(s.skill)}>×</button>
-                  </li>
-                ))}
-              </ul>
+          {/* --- Active Swaps Tab --- */}
+          {activeTab === 'swaps' && (
+            <div>
+              <h3>Current Skill Swaps</h3>
+              {ongoingExchanges.length === 0 ? (
+                <p>No ongoing exchanges.</p>
+              ) : (
+                ongoingExchanges.map(swap => (
+                  <div key={swap._id} className="swap-card">
+                    Swap for <strong>{swap.skillRequested}</strong> with <strong>
+                      {swap.provider._id === user._id ? swap.requester.username : swap.provider.username}
+                    </strong>
+                    <div className="progress-bar"><div style={{ width: '50%' }}></div></div>
+                  </div>
+                ))
+              )}
             </div>
+          )}
+          
+          {/* --- Skills Tab --- */}
+          {activeTab === 'skills' && (
+            <div className="skill-list-container">
+              <div>
+                <h3>Skills You Can Teach</h3>
+                <ul className="skill-list-tab">
+                  {user.skillsToTeach.length === 0 ? (
+                    <li>No skills to teach yet.</li>
+                  ) : (
+                    user.skillsToTeach.map((s, i) => (
+                      <li key={i}>
+                        <strong>{s.skill}</strong> ({s.level})
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+              <div>
+                <h3>Skills You Want to Learn</h3>
+                <ul className="skill-list-tab">
+                  {user.skillsToLearn.length === 0 ? (
+                    <li>No skills to learn yet.</li>
+                  ) : (
+                    user.skillsToLearn.map((skill, i) => (
+                      <li key={i}><strong>{skill}</strong></li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            </div>
+          )}
 
-            {/* Skills to Learn */}
-            <div className="profile-card">
-              <h3>Skills You Want to Learn</h3>
-              <div className="skill-input-group">
-                <input type="text" className="skill-input" value={learnSkill}
-                  onChange={(e) => setLearnSkill(e.target.value)} placeholder="e.g., Python" />
-                <button type="button" className="skill-add-btn" onClick={addLearnSkill}>Add</button>
-              </div>
-              <ul className="skill-list">
-                {skillsToLearn.map((skill, index) => (
-                  <li key={index} className="skill-tag">
-                    {skill}
-                    <button type="button" className="skill-remove-btn" onClick={() => removeLearnSkill(skill)}>×</button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* The save button is now in the header card, 
-              so we don't need a submit button here.
-            */}
-            
-          </div>
         </div>
       </div>
     </div>
