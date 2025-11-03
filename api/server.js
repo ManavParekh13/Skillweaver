@@ -13,8 +13,27 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // --- Middlewares ---
-// Allows our server to accept requests from different origins (our React app)
-app.use(cors()); 
+// --- REPLACE app.use(cors()) WITH THIS ---
+
+// Define allowed origins (your live frontend and your local machine)
+const allowedOrigins = [
+  'https://skillweaver.onrender.com', // Your live frontend
+  'http://localhost:5173'           // Your local frontend
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like Postman) or from your whitelist
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+};
+
+app.use(cors(corsOptions));
+// ----------------------------------------
 // Allows our server to understand JSON data sent in request bodies
 app.use(express.json()); 
 
