@@ -166,3 +166,11 @@
   font-size: 0.9em;
   margin-top: 2px;
 }
+
+.skill-swap-btn.disabled {
+  background-color: var(--text-light);
+  cursor: not-allowed;
+}
+.skill-swap-btn.disabled:hover {
+  background-color: var(--text-light);
+}

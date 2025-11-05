@@ -1,7 +1,6 @@
-// frontend/src/Pages/DashboardPage.jsx
-
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api.js';
+import axios from 'axios'; // You were missing this import
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import './Dashboard.css';
@@ -26,19 +25,29 @@ function DashboardPage() {
   const [searchUser, setSearchUser] = useState('');
   const [searchSkill, setSearchSkill] = useState('');
   const [searchLocation, setSearchLocation] = useState('');
-  const [searchLevel, setSearchLevel] = useState(''); // <-- 1. ADD LEVEL STATE
+  const [searchLevel, setSearchLevel] = useState('');
 
   // --- State for Pagination ---
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+  const [myRequests, setMyRequests] = useState([]);
 
   useEffect(() => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/public/users'); 
+        // We need two separate requests
+        // 1. Public request for all users (uses plain axios)
+        const usersPromise = axios.get('/api/public/users');
         
+        // 2. Private request for *my* swaps (uses 'api' helper)
+        const swapsPromise = token ? api.get('/swaps/me') : Promise.resolve({ data: [] });
+
+        // Run them at the same time
+        const [usersRes, swapsRes] = await Promise.all([usersPromise, swapsPromise]);
+
+        // Process users into offerings (same as before)
         const allOfferings = [];
-        response.data.forEach(user => {
+        usersRes.data.forEach(user => {
           user.skillsToTeach.forEach(skillObj => {
             allOfferings.push({
               _id: `${user._id}_${skillObj.skill}`,
@@ -55,15 +64,25 @@ function DashboardPage() {
           });
         });
         setOfferings(allOfferings);
+        
+        // Save the user's personal swap requests
+        setMyRequests(swapsRes.data);
 
       } catch (err) {
-        console.error(err);
+        // Handle failed public data fetch
+        if (err.config && err.config.url.includes('/api/public/users')) {
+          console.error('Failed to load public users', err);
+        } else if (err.config && err.config.url.includes('/swaps/me')) {
+          console.error('Failed to load user swaps', err);
+        } else {
+          console.error('An unexpected error occurred', err);
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchAllData();
-  }, []);
+  }, [token]);
 
   // --- Full Filtering Logic ---
   const filteredOfferings = offerings.filter(offering => {
@@ -76,7 +95,7 @@ function DashboardPage() {
       return false;
     }
     // 3. Filter by Level
-    if (searchLevel && offering.level !== searchLevel) { // <-- 2. ADD LEVEL LOGIC
+    if (searchLevel && offering.level !== searchLevel) {
       return false;
     }
     // 4. Filter by User
@@ -127,7 +146,7 @@ function DashboardPage() {
           ))}
         </select>
 
-        {/* --- 3. ADD LEVEL DROPDOWN --- */}
+        {/* --- Level Dropdown --- */}
         <select 
           className="filter-select"
           value={searchLevel}
@@ -159,7 +178,11 @@ function DashboardPage() {
             <p>No skills found. Try a different search!</p>
           ) : (
             offeringsToShow.map(offering => (
-              <SkillCard key={offering._id} offering={offering} />
+              <SkillCard 
+                key={offering._id} 
+                offering={offering} 
+                myRequests={myRequests} // <-- This prop is now used
+              />
             ))
           )}
         </div>
@@ -185,10 +208,19 @@ function DashboardPage() {
   );
 }
 
-// --- Skill Card Component (This component is unchanged) ---
-function SkillCard({ offering }) {
+// --- Skill Card Component (NOW UPDATED) ---
+function SkillCard({ offering, myRequests }) {
   const { token } = useAuth();
-  const navigate = useNavigate();
+  
+  // 1. ADD LOCAL STATE TO TRACK A *NEWLY* SENT REQUEST
+  const [isNewlyRequested, setIsNewlyRequested] = useState(false);
+
+  // 2. CHECK IF A REQUEST *ALREADY EXISTS* FROM PAGE LOAD
+  // We check if any swap in `myRequests` matches this specific offering
+  const existingRequest = myRequests.find(swap => 
+    swap.provider === offering.user._id && 
+    swap.skillRequested === offering.skill
+  );
 
   const handleRequestSwap = async () => {
     const skillOffered = prompt(`What skill will you offer ${offering.user.username} in return for ${offering.skill}?`);
@@ -200,7 +232,12 @@ function SkillCard({ offering }) {
         skillOffered: skillOffered
       });
       alert('Swap request sent successfully!');
-      navigate('/dashboard'); 
+      
+      // 3. SET LOCAL STATE TO TRUE TO UPDATE THE BUTTON
+      setIsNewlyRequested(true);
+      
+      // We no longer navigate, so the user doesn't lose their filters
+      // navigate('/dashboard'); 
     } catch (err) {
       console.error(err);
       alert('Failed to send swap request.');
@@ -208,6 +245,10 @@ function SkillCard({ offering }) {
   };
 
   const levelClass = offering.level.toLowerCase();
+
+  // 4. DETERMINE FINAL BUTTON STATE
+  const hasBeenRequested = existingRequest || isNewlyRequested;
+  const currentStatus = existingRequest ? existingRequest.status : 'pending';
 
   return (
     <div className="skill-card">
@@ -231,11 +272,19 @@ function SkillCard({ offering }) {
         <span>Looking for:</span> {offering.user.skillsToLearn.join(', ') || 'Not specified'}
       </div>
       
+      {/* --- 5. UPDATED BUTTON LOGIC --- */}
       <div className="skill-card-footer">
         {token ? (
-          <button className="skill-swap-btn" onClick={handleRequestSwap}>
-            Request Swap
-          </button>
+          hasBeenRequested ? (
+            <button className="skill-swap-btn" disabled>
+              {/* Show the status, capitalize first letter */}
+              Swap {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+            </button>
+          ) : (
+            <button className="skill-swap-btn" onClick={handleRequestSwap}>
+              Request Swap
+            </button>
+          )
         ) : (
           <Link to="/login" className="skill-swap-btn">
             Login to Request Swap

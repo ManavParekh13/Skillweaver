@@ -10,16 +10,13 @@ function UserDashboard() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
 
-  // 1. Fetch both the user's profile and their swaps
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Fetch profile to get user's ID and name
         const profileRes = await api.get('/profile/me');
         setProfile(profileRes.data);
         
-        // Fetch all swaps for this user
         const swapsRes = await api.get('/swaps/me');
         setSwaps(swapsRes.data);
       } catch (err) {
@@ -31,17 +28,41 @@ function UserDashboard() {
     fetchData();
   }, []);
 
-  // 2. Click handlers for Accept/Decline
-  const handleSwapAction = async (id, newStatus) => {
+  // --- UPDATED: Replaced 'handleSwapAction' with two specific functions ---
+
+  const handleAcceptSwap = async (id) => {
     try {
-      // Send the update to the API
-      const res = await api.put(`/swaps/${id}`, { status: newStatus });
-      
-      // Update the state locally to avoid a full reload
+      const res = await api.put(`/swaps/${id}/accept`);
+      // Update the swap in our local state
       setSwaps(swaps.map(swap => (swap._id === id ? res.data : swap)));
     } catch (err) {
       console.error(err);
-      alert(`Failed to ${newStatus} swap.`);
+      alert('Failed to accept swap.');
+    }
+  };
+  
+  const handleDeclineSwap = async (id) => {
+    try {
+      const res = await api.put(`/swaps/${id}/reject`);
+      // Update the swap in our local state
+      setSwaps(swaps.map(swap => (swap._id === id ? res.data : swap)));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to decline swap.');
+    }
+  };
+
+  // This is your existing function, it is correct
+  const handleCompleteSwap = async (id) => {
+    if (!window.confirm('Are you sure you want to mark this swap as completed?')) {
+      return;
+    }
+    try {
+      const res = await api.put(`/swaps/${id}/complete`);
+      setSwaps(swaps.map(swap => (swap._id === id ? res.data : swap)));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to mark swap as complete.');
     }
   };
 
@@ -49,7 +70,7 @@ function UserDashboard() {
     return <div>Loading Dashboard...</div>;
   }
 
-  // 3. Filter the swaps into different categories
+  // --- THESE FILTERS ARE NOW CORRECT AND WILL WORK ---
   const newRequests = swaps.filter(
     s => s.status === 'pending' && s.provider._id === profile._id
   );
@@ -63,10 +84,8 @@ function UserDashboard() {
       <h1 className="dashboard-welcome">Welcome back, {profile.username}!</h1>
 
       <div className="dashboard-grid">
-        {/* --- Main Column --- */}
         <div className="dashboard-main">
           
-          {/* --- New Requests --- */}
           <h2>New Swap Requests</h2>
           {newRequests.length === 0 ? (
             <p>No new swap requests.</p>
@@ -79,40 +98,53 @@ function UserDashboard() {
                   </p>
                 </div>
                 <div className="request-actions">
-                  <button className="btn-accept" onClick={() => handleSwapAction(swap._id, 'accepted')}>Accept</button>
-                  <button className="btn-decline" onClick={() => handleSwapAction(swap._id, 'declined')}>Decline</button>
+                  {/* --- UPDATED: Calling new functions --- */}
+                  <button className="btn-accept" onClick={() => handleAcceptSwap(swap._id)}>Accept</button>
+                  <button className="btn-decline" onClick={() => handleDeclineSwap(swap._id)}>Decline</button>
                 </div>
               </div>
             ))
           )}
 
-          {/* --- Ongoing Exchanges --- */}
-          <h2 style={{ marginTop: '2rem' }}>Ongoing Exchanges</h2>
-          {ongoingExchanges.length === 0 ? (
-            <p>No ongoing exchanges.</p>
-          ) : (
-            ongoingExchanges.map(swap => (
-              <div key={swap._id} className="swap-card">
+        <h2 style={{ marginTop: '2rem' }}>Ongoing Exchanges</h2>
+        {ongoingExchanges.length === 0 ? (
+          <p>No ongoing exchanges.</p>
+        ) : (
+          ongoingExchanges.map(swap => (
+            <div key={swap._id} className="swap-card">
+              <div>
                 Swap for <strong>{swap.skillRequested}</strong> with <strong>
-                  {/* Show the *other* user's name */}
                   {swap.provider._id === profile._id ? swap.requester.username : swap.provider.username}
                 </strong>
-                {/* Progress bar is static for mini-project */}
                 <p>In Progress</p>
                 <div className="progress-bar"><div style={{ width: '50%' }}></div></div>
               </div>
-            ))
-          )}
+              <div className="swap-card-footer">
+                {/* --- This button was already correct --- */}
+                <button 
+                  className="btn-complete"
+                  onClick={() => handleCompleteSwap(swap._id)}
+                >
+                  Mark as Completed
+                </button>
+              </div>
+            </div>
+          ))
+        )}
 
-          {/* --- Swap History --- */}
           <h2 style={{ marginTop: '2rem' }}>Swap History</h2>
           {swapHistory.length === 0 ? (
             <p>No completed or declined swaps.</p>
           ) : (
             swapHistory.map(swap => (
-              <div key={swap._id} className="request-card">
+              // --- UPDATED: Added a class for styling ---
+              <div key={swap._id} className={`request-card history ${swap.status}`}>
                 <p>
-                  <strong>{swap.status.toUpperCase()}:</strong> Swap with <strong>
+                  {/* --- UPDATED: Better formatting --- */}
+                  <span className={`history-status ${swap.status}`}>
+                    {swap.status.charAt(0).toUpperCase() + swap.status.slice(1)}
+                  </span>
+                  Swap with <strong>
                   {swap.provider._id === profile._id ? swap.requester.username : swap.provider.username}
                   </strong> for <span className="skill">{swap.skillRequested}</span>.
                 </p>
@@ -121,7 +153,6 @@ function UserDashboard() {
           )}
         </div>
 
-        {/* --- Sidebar (simplified) --- */}
         <div className="dashboard-sidebar">
           <h2>Your Stats</h2>
           <div className="stat-card">
