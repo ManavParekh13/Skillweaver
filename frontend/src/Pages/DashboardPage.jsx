@@ -82,7 +82,7 @@ function DashboardPage() {
       }
     };
     fetchAllData();
-  }, [token]);
+  }, []);
 
   // --- Full Filtering Logic ---
   const filteredOfferings = offerings.filter(offering => {
